@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile — Sunday School</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 id="profileName">Student Profile</h1>
+                    <p id="profileClass">Loading...</p>
+                </div>
+                <a href="/students" class="btn btn-secondary">← Back to Students</a>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card purple">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-value" id="pAttendance">-</div>
+                    <div class="stat-label">Attendance %</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value" id="pMarks">-</div>
+                    <div class="stat-label">Total Marks</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-icon">👤</div>
+                    <div class="stat-value" id="pGender">-</div>
+                    <div class="stat-label">Gender</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-icon">🎂</div>
+                    <div class="stat-value" id="pAge">-</div>
+                    <div class="stat-label">Age</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 Attendance History</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTable">
+                                <tr>
+                                    <td colspan="2">
+                                        <div class="loading-overlay"><span class="spinner"></span></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📝 Test Results</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Test</th>
+                                    <th>Date</th>
+                                    <th>Marks</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody id="testsTable">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="loading-overlay"><span class="spinner"></span></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        initLayout();
+        const studentId = window.location.pathname.split('/')[2];
+
+        (async function load() {
+            try {
+                const report = await apiFetch('/api/reports/student/' + studentId);
+                document.getElementById('profileName').textContent = report.fullName;
+                document.getElementById('profileClass').textContent = 'Class: ' + (report.className || 'N/A');
+                document.getElementById('pAttendance').textContent = report.attendancePercentage.toFixed(1) + '%';
+                document.getElementById('pMarks').textContent = report.totalMarks;
+
+                // Also get basic student details
+                const student = await apiFetch('/api/students/' + studentId);
+                document.getElementById('pGender').textContent = student.gender || '-';
+                document.getElementById('pAge').textContent = student.age || '-';
+
+                // Attendance table
+                const attBody = document.getElementById('attendanceTable');
+                if (report.attendanceHistory.length === 0) {
+                    attBody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><p>No attendance records</p></div></td></tr>';
+                } else {
+                    attBody.innerHTML = report.attendanceHistory.map(a => `
+                        <tr>
+                            <td>${formatDate(a.date)}</td>
+                            <td><span class="badge ${a.present ? 'badge-present' : 'badge-absent'}">${a.present ? 'Present' : 'Absent'}</span></td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Tests table
+                const testBody = document.getElementById('testsTable');
+                if (report.testResults.length === 0) {
+                    testBody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No test results</p></div></td></tr>';
+                } else {
+                    testBody.innerHTML = report.testResults.map(t => `
+                        <tr>
+                            <td><strong>${t.testTitle || '-'}</strong></td>
+                            <td>${formatDate(t.testDate)}</td>
+                            <td><strong>${t.marksObtained}</strong></td>
+                            <td>${t.maxMarks}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                showToast('Failed to load profile: ' + err.message, 'error');
+            }
+        })();
+    </script>
+</body>
+
+</html>

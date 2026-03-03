@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests &amp; Marks — Sunday School</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>Tests &amp; Marks</h1>
+                    <p>Create tests and assign marks to students.</p>
+                </div>
+                <button class="btn btn-primary teacher-only" onclick="openModal('addTestModal')">+ Create Test</button>
+            </div>
+
+            <div class="tabs" id="classTabs"><button class="tab-btn active">Loading...</button></div>
+
+            <!-- Tests List -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2>📝 Tests</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Max Marks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testsTable">
+                            <tr>
+                                <td colspan="4">
+                                    <div class="loading-overlay"><span class="spinner"></span></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Marks Panel (shown when a test is selected) -->
+            <div class="card" id="marksPanel" style="display:none">
+                <div class="card-header">
+                    <h2 id="marksPanelTitle">Marks</h2>
+                </div>
+                <div id="marksContent"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Test Modal -->
+    <div class="modal-overlay" id="addTestModal">
+        <div class="modal">
+            <h2>Create Test</h2>
+            <form id="testForm">
+                <div class="form-group"><label>Title</label><input type="text" class="form-control" id="tTitle"
+                        required></div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Class</label><select class="form-control" id="tClassId"
+                            required></select></div>
+                    <div class="form-group"><label>Max Marks</label><input type="number" class="form-control"
+                            id="tMaxMarks" value="100" required></div>
+                </div>
+                <div class="form-group"><label>Test Date</label><input type="date" class="form-control" id="tDate"
+                        required></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTestModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assign Marks Modal -->
+    <div class="modal-overlay" id="assignMarksModal">
+        <div class="modal">
+            <h2>Assign Marks</h2>
+            <form id="marksForm">
+                <input type="hidden" id="mTestId"><input type="hidden" id="mStudentId">
+                <div class="form-group"><label>Student</label><input type="text" class="form-control" id="mStudentName"
+                        disabled></div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Marks Obtained</label><input type="number" class="form-control"
+                            id="mMarks" min="0" required></div>
+                    <div class="form-group"><label>Present?</label><select class="form-control" id="mPresent">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('assignMarksModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Marks</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        initLayout();
+        let classes = [], currentClassId = null;
+
+        (async function init() {
+            classes = await apiFetch('/api/classes');
+            const tabs = document.getElementById('classTabs');
+            document.getElementById('tClassId').innerHTML = classes.map(c => `<option value="${c.classId}">${c.className}</option>`).join('');
+            if (classes.length === 0) { tabs.innerHTML = '<span style="color:var(--text-muted);padding:10px">No classes</span>'; return; }
+            tabs.innerHTML = classes.map((c, i) => `<button class="tab-btn ${i === 0 ? 'active' : ''}" data-class="${c.classId}">${c.className}</button>`).join('');
+            tabs.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+                tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadTests(btn.dataset.class);
+            }));
+            loadTests(classes[0].classId);
+        })();
+
+        async function loadTests(classId) {
+            currentClassId = classId;
+            document.getElementById('marksPanel').style.display = 'none';
+            const tbody = document.getElementById('testsTable');
+            try {
+                const tests = await apiFetch('/api/tests/class/' + classId);
+                if (tests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📝</div><p>No tests yet</p></div></td></tr>';
+                } else {
+                    tbody.innerHTML = tests.map(t => `<tr>
+                        <td><strong>${t.title}</strong></td>
+                        <td>${formatDate(t.testDate)}</td>
+                        <td>${t.maxMarks}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="viewMarks(${t.testId}, '${t.title}', ${t.maxMarks})">View Marks</button>
+                            <button class="btn btn-sm btn-primary teacher-only" onclick="assignMarksForTest(${t.testId}, ${t.maxMarks})">Assign Marks</button>
+                        </td>
+                    </tr>`).join('');
+                }
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function viewMarks(testId, title, maxMarks) {
+            document.getElementById('marksPanel').style.display = 'block';
+            document.getElementById('marksPanelTitle').textContent = 'Marks — ' + title;
+            const content = document.getElementById('marksContent');
+            try {
+                const marks = await apiFetch('/api/tests/marks/test/' + testId);
+                if (marks.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><p>No marks assigned yet</p></div>';
+                } else {
+                    content.innerHTML = '<div class="table-container"><table><thead><tr><th>Student</th><th>Marks</th><th>Max</th><th>Present</th></tr></thead><tbody>' +
+                        marks.map(m => `<tr>
+                            <td><strong>${m.student ? m.student.fullName : '-'}</strong></td>
+                            <td><strong>${m.marksObtained}</strong></td>
+                            <td>${maxMarks}</td>
+                            <td><span class="badge ${m.present ? 'badge-present' : 'badge-absent'}">${m.present ? 'Yes' : 'No'}</span></td>
+                        </tr>`).join('') + '</tbody></table></div>';
+                }
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function assignMarksForTest(testId, maxMarks) {
+            // Load students for the class and let teacher assign marks one by one
+            try {
+                const students = await apiFetch('/api/classes/' + currentClassId + '/students');
+                document.getElementById('marksPanel').style.display = 'block';
+                document.getElementById('marksPanelTitle').textContent = 'Assign Marks';
+                const content = document.getElementById('marksContent');
+                content.innerHTML = '<div class="attendance-list">' + students.map(s => `
+                    <div class="attendance-row">
+                        <span><strong>${s.fullName}</strong></span>
+                        <div class="flex-row gap-8">
+                            <input type="number" class="form-control" style="width:80px" min="0" max="${maxMarks}" value="0" data-student="${s.studentId}">
+                            <button class="btn btn-sm btn-primary" onclick="saveMark(${testId}, ${s.studentId}, this)">Save</button>
+                        </div>
+                    </div>
+                `).join('') + '</div>';
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function saveMark(testId, studentId, btn) {
+            const input = btn.parentElement.querySelector('input');
+            try {
+                await apiFetch('/api/tests/marks?testId=' + testId + '&studentId=' + studentId + '&marks=' + input.value + '&present=true', { method: 'POST' });
+                showToast('Marks saved!', 'success');
+                btn.textContent = '✅';
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        // Create test
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiFetch('/api/tests', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: document.getElementById('tTitle').value,
+                        sundayClass: { classId: parseInt(document.getElementById('tClassId').value) },
+                        maxMarks: parseInt(document.getElementById('tMaxMarks').value),
+                        testDate: document.getElementById('tDate').value
+                    })
+                });
+                showToast('Test created!', 'success');
+                closeModal('addTestModal');
+                loadTests(currentClassId);
+            } catch (e) { showToast(e.message, 'error'); }
+        });
+
+        // Assign marks modal
+        document.getElementById('marksForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const testId = document.getElementById('mTestId').value;
+            const studentId = document.getElementById('mStudentId').value;
+            const marks = document.getElementById('mMarks').value;
+            const present = document.getElementById('mPresent').value;
+            try {
+                await apiFetch('/api/tests/marks?testId=' + testId + '&studentId=' + studentId + '&marks=' + marks + '&present=' + present, { method: 'POST' });
+                showToast('Marks saved!', 'success');
+                closeModal('assignMarksModal');
+            } catch (e) { showToast(e.message, 'error'); }
+        });
+    </script>
+</body>
+
+</html>

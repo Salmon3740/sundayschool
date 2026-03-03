@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — Sunday School</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>Reports</h1>
+                    <p>View student and class reports with detailed analytics.</p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('student', this)">👨‍🎓 Student Report</button>
+                <button class="tab-btn" onclick="switchTab('class', this)">🏫 Class Report</button>
+            </div>
+
+            <!-- Student Report Tab -->
+            <div class="tab-content active" id="studentTab">
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <h2>Search Student</h2>
+                    </div>
+                    <div class="flex-row">
+                        <div class="search-bar" style="flex:1;max-width:400px">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="reportSearch" placeholder="Enter student name...">
+                        </div>
+                    </div>
+                    <div id="searchResults" class="mt-16"></div>
+                </div>
+                <div id="studentReport" style="display:none">
+                    <div class="stats-grid">
+                        <div class="stat-card purple">
+                            <div class="stat-icon">👨‍🎓</div>
+                            <div class="stat-value" id="rName">-</div>
+                            <div class="stat-label">Student</div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="rAtt">-</div>
+                            <div class="stat-label">Attendance %</div>
+                        </div>
+                        <div class="stat-card pink">
+                            <div class="stat-icon">📝</div>
+                            <div class="stat-value" id="rMarks">-</div>
+                            <div class="stat-label">Total Marks</div>
+                        </div>
+                        <div class="stat-card orange">
+                            <div class="stat-icon">🏫</div>
+                            <div class="stat-value" id="rClass">-</div>
+                            <div class="stat-label">Class</div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>📋 Week-wise Attendance</h3>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rAttTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>📝 Test-wise Marks</h3>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Test</th>
+                                            <th>Date</th>
+                                            <th>Marks</th>
+                                            <th>Max</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rTestTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Report Tab -->
+            <div class="tab-content" id="classTab">
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <h2>Select Class</h2>
+                    </div>
+                    <select class="form-control" id="reportClassSelect" style="max-width:300px"
+                        onchange="loadClassReport(this.value)">
+                        <option value="">Select a class...</option>
+                    </select>
+                </div>
+                <div class="card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Gender</th>
+                                    <th>Age</th>
+                                    <th>Attendance %</th>
+                                    <th>Total Marks</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classReportTable">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">
+                                            <p>Select a class to view report</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        initLayout();
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        // Load classes for class report dropdown
+        (async function () {
+            try {
+                const classes = await apiFetch('/api/classes');
+                document.getElementById('reportClassSelect').innerHTML = '<option value="">Select a class...</option>' +
+                    classes.map(c => `<option value="${c.classId}">${c.className}</option>`).join('');
+            } catch (e) { }
+        })();
+
+        // Student search
+        document.getElementById('reportSearch').addEventListener('input', debounce(async (e) => {
+            const q = e.target.value.trim();
+            if (q.length < 2) { document.getElementById('searchResults').innerHTML = ''; return; }
+            try {
+                const results = await apiFetch('/api/students/search?name=' + encodeURIComponent(q));
+                document.getElementById('searchResults').innerHTML = results.map(s => `
+                    <div class="attendance-row" style="cursor:pointer" onclick="loadStudentReport(${s.studentId})">
+                        <span><strong>${s.fullName}</strong> — ${s.sundayClass ? s.sundayClass.className : 'N/A'}</span>
+                        <span class="btn btn-sm btn-secondary">View Report</span>
+                    </div>
+                `).join('');
+            } catch (e) { }
+        }, 300));
+
+        async function loadStudentReport(studentId) {
+            try {
+                const report = await apiFetch('/api/reports/student/' + studentId);
+                document.getElementById('studentReport').style.display = 'block';
+                document.getElementById('rName').textContent = report.fullName;
+                document.getElementById('rAtt').textContent = report.attendancePercentage.toFixed(1) + '%';
+                document.getElementById('rMarks').textContent = report.totalMarks;
+                document.getElementById('rClass').textContent = report.className || 'N/A';
+
+                // Attendance table
+                const attBody = document.getElementById('rAttTable');
+                attBody.innerHTML = report.attendanceHistory.length === 0 ? '<tr><td colspan="2">No records</td></tr>' :
+                    report.attendanceHistory.map(a => `<tr><td>${formatDate(a.date)}</td><td><span class="badge ${a.present ? 'badge-present' : 'badge-absent'}">${a.present ? 'Present' : 'Absent'}</span></td></tr>`).join('');
+
+                // Test table
+                const testBody = document.getElementById('rTestTable');
+                testBody.innerHTML = report.testResults.length === 0 ? '<tr><td colspan="4">No results</td></tr>' :
+                    report.testResults.map(t => `<tr><td><strong>${t.testTitle || '-'}</strong></td><td>${formatDate(t.testDate)}</td><td><strong>${t.marksObtained}</strong></td><td>${t.maxMarks}</td></tr>`).join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function loadClassReport(classId) {
+            if (!classId) return;
+            const tbody = document.getElementById('classReportTable');
+            try {
+                const report = await apiFetch('/api/reports/class/' + classId);
+                if (report.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>No students in this class</p></div></td></tr>';
+                } else {
+                    tbody.innerHTML = report.map(s => `<tr>
+                        <td><strong>${s.fullName}</strong></td>
+                        <td>${s.gender || '-'}</td>
+                        <td>${s.age || '-'}</td>
+                        <td>
+                            <div class="flex-row gap-8">
+                                <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${s.attendancePercentage}%"></div></div>
+                                <span style="font-size:12px">${s.attendancePercentage.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td><strong>${s.totalMarks}</strong></td>
+                        <td><span class="badge ${s.active ? 'badge-active' : 'badge-inactive'}">${s.active ? 'Active' : 'Inactive'}</span></td>
+                    </tr>`).join('');
+                }
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+    </script>
+</body>
+
+</html>

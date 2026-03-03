@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — Sunday School</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <span class="logo-icon">⛪</span>
+                    <h1>Sunday School</h1>
+                    <p>Create a new account</p>
+                </div>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="form-control" id="username" placeholder="Choose a username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Create a password"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label>Secret Key <span style="color:var(--text-muted); font-weight:400">(teachers only — leave
+                                blank for student)</span></label>
+                        <input type="text" class="form-control" id="secretKey"
+                            placeholder="Enter secret key if you are a teacher">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                        Create Account
+                    </button>
+                </form>
+                <p style="text-align:center; margin-top:20px; font-size:14px; color:var(--text-secondary)">
+                    Already have an account? <a href="/login">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        if (isLoggedIn()) window.location.href = '/dashboard';
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('registerBtn');
+            btn.innerHTML = '<span class="spinner"></span> Creating...';
+            btn.disabled = true;
+
+            try {
+                const body = {
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                };
+                const sk = document.getElementById('secretKey').value.trim();
+                if (sk) body.secretKey = sk;
+
+                const data = await apiFetch('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+                saveAuth(data.data.token, data.data.username, data.data.role);
+                showToast('Registration successful!', 'success');
+                setTimeout(() => window.location.href = '/dashboard', 500);
+            } catch (err) {
+                showToast(err.message || 'Registration failed', 'error');
+                btn.innerHTML = 'Create Account';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

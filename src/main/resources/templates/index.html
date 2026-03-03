@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMCF Sunday School — Management System</title>
+    <meta name="description"
+        content="TMCF Sunday School Management System — manage students, attendance, lessons, and more.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* ===== Landing Page Styles ===== */
+        .landing-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            animation: float 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-primary);
+            top: -120px;
+            left: -120px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-secondary);
+            top: 30%;
+            right: -100px;
+            animation-delay: 2s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: var(--accent-pink);
+            bottom: -80px;
+            left: 30%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+
+            50% {
+                transform: translateY(-30px) scale(1.05);
+            }
+        }
+
+        /* Nav */
+        .landing-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 48px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .landing-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .landing-brand-icon {
+            font-size: 32px;
+        }
+
+        .landing-brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .landing-nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Hero */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 24px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #a78bfa;
+            margin-bottom: 32px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .hero-title {
+            font-size: clamp(42px, 7vw, 80px);
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1.05;
+            background: linear-gradient(135deg, #ffffff 0%, #a78bfa 40%, #60a5fa 70%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 24px;
+            animation: slideUp 0.7s ease-out 0.1s both;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(16px, 2.5vw, 20px);
+            color: var(--text-secondary);
+            max-width: 580px;
+            line-height: 1.7;
+            margin-bottom: 48px;
+            animation: slideUp 0.7s ease-out 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: slideUp 0.7s ease-out 0.3s both;
+        }
+
+        .btn-hero-primary {
+            padding: 16px 40px;
+            font-size: 16px;
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+            letter-spacing: 0.3px;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(124, 58, 237, 0.5);
+            color: white;
+        }
+
+        .btn-hero-secondary {
+            padding: 16px 40px;
+            font-size: 16px;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-3px);
+            color: var(--text-primary);
+            border-color: rgba(124, 58, 237, 0.4);
+        }
+
+        /* Feature Cards */
+        .features-section {
+            padding: 40px 48px 80px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            transition: var(--transition);
+            animation: slideUp 0.8s ease-out both;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(124, 58, 237, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 36px;
+            margin-bottom: 14px;
+        }
+
+        .feature-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .landing-footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Classes strip */
+        .classes-strip {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+            animation: slideUp 0.7s ease-out 0.4s both;
+        }
+
+        .class-pill {
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .class-pill:hover {
+            background: rgba(124, 58, 237, 0.12);
+            border-color: rgba(124, 58, 237, 0.3);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="landing-page">
+        <!-- Floating orbs -->
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+
+        <!-- Navigation -->
+        <nav class="landing-nav">
+            <div class="landing-brand">
+                <span class="landing-brand-icon">⛪</span>
+                <span class="landing-brand-text">TMCF Sunday School</span>
+            </div>
+            <div class="landing-nav-actions">
+                <a href="/login" class="btn btn-secondary btn-sm">Sign In</a>
+                <a href="/register" class="btn btn-primary btn-sm">Register</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-badge">
+                ⛪ Welcome to TMCF Sunday School
+            </div>
+            <h1 class="hero-title">TMCF Sunday School<br>Management System</h1>
+            <p class="hero-subtitle">
+                A complete platform for managing students, attendance, weekly lessons,
+                test results, and more — all in one beautiful, easy-to-use system.
+            </p>
+
+            <!-- Class Badges -->
+            <div class="classes-strip">
+                <span class="class-pill">🌱 Beginners</span>
+                <span class="class-pill">🌼 Primerie</span>
+                <span class="class-pill">⭐ Juniors</span>
+                <span class="class-pill">🎓 Seniors</span>
+                <span class="class-pill">🏆 Super Seniors</span>
+            </div>
+
+            <div class="hero-actions">
+                <a href="/register" class="btn btn-hero-primary">Get Started — Register</a>
+                <a href="/login" class="btn btn-hero-secondary">Sign In →</a>
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section class="features-section">
+            <div class="features-grid">
+                <div class="feature-card" style="animation-delay:0.1s">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-title">Attendance Tracking</div>
+                    <div class="feature-desc">Mark weekly attendance per class with one-click Present All / Absent All.
+                    </div>
+                </div>
+                <div class="feature-card" style="animation-delay:0.2s">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-title">Weekly Lessons</div>
+                    <div class="feature-desc">Set and update Word of the Week and Lesson of the Week for every class.
+                    </div>
+                </div>
+                <div class="feature-card" style="animation-delay:0.3s">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-title">Tests &amp; Marks</div>
+                    <div class="feature-desc">Create tests, assign marks per student, and track results over time.</div>
+                </div>
+                <div class="feature-card" style="animation-delay:0.4s">
+                    <div class="feature-icon">🎵</div>
+                    <div class="feature-title">Songs &amp; Stories</div>
+                    <div class="feature-desc">Browse and manage a library of Sunday school songs and stories.</div>
+                </div>
+                <div class="feature-card" style="animation-delay:0.5s">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">Student Search</div>
+                    <div class="feature-desc">Instantly find any student and view their full profile with live stats.
+                    </div>
+                </div>
+                <div class="feature-card" style="animation-delay:0.6s">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Reports</div>
+                    <div class="feature-desc">Auto-calculated attendance percentages and total marks for every student.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            © 2025 TMCF Sunday School. Built with ❤️ for the community.
+        </footer>
+    </div>
+
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        // If already logged in, go straight to dashboard
+        if (isLoggedIn()) window.location.href = '/dashboard';
+    </script>
+</body>
+
+</html>

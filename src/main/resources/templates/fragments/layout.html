@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- Reusable sidebar fragment -->
+<div th:fragment="sidebar">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand">
+                <span class="brand-icon">⛪</span>
+                <div class="brand-text">
+                    <h2>Sunday School</h2>
+                    <span>Management</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/students" class="nav-link"><span class="nav-icon">👨‍🎓</span> Students</a>
+                <a href="/attendance" class="nav-link"><span class="nav-icon">📋</span> Attendance</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Academic</div>
+                <a href="/lessons" class="nav-link"><span class="nav-icon">📖</span> Lessons</a>
+                <a href="/tests" class="nav-link"><span class="nav-icon">📝</span> Tests &amp; Marks</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Content</div>
+                <a href="/songs-stories" class="nav-link"><span class="nav-icon">🎵</span> Songs &amp; Stories</a>
+                <a href="/reports" class="nav-link"><span class="nav-icon">📈</span> Reports</a>
+            </div>
+            <div class="nav-section" id="sidebarClassesSection">
+                <div class="nav-section-title">Classes</div>
+                <div id="sidebarClassLinks">
+                    <span
+                        style="font-size:12px;color:var(--text-muted);padding:6px 12px;display:block">Loading...</span>
+                </div>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">U</div>
+                <div class="user-details">
+                    <div class="user-name">User</div>
+                    <div class="user-role">STUDENT</div>
+                </div>
+                <button class="btn-logout" title="Logout">🚪</button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+</html>

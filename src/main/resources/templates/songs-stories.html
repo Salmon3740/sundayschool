@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Songs &amp; Stories — Sunday School</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>Songs &amp; Stories</h1>
+                    <p>Browse and manage songs and stories.</p>
+                </div>
+                <button class="btn btn-primary teacher-only" onclick="openAddModal()">+ Add Item</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="filterType('ALL', this)">All</button>
+                <button class="tab-btn" onclick="filterType('SONG', this)">🎵 Songs</button>
+                <button class="tab-btn" onclick="filterType('STORY', this)">📖 Stories</button>
+            </div>
+
+            <div class="item-cards" id="itemsGrid">
+                <div class="loading-overlay"><span class="spinner"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal">
+            <h2 id="itemModalTitle">Add Song / Story</h2>
+            <form id="itemForm">
+                <input type="hidden" id="editItemId">
+                <div class="form-group"><label>Title</label><input type="text" class="form-control" id="iTitle"
+                        required></div>
+                <div class="form-group"><label>Type</label>
+                    <select class="form-control" id="iType" required>
+                        <option value="SONG">Song</option>
+                        <option value="STORY">Story</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Link / URL</label><input type="text" class="form-control" id="iLink"
+                        required></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('itemModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        initLayout();
+        let allItems = [];
+
+        async function loadItems() {
+            try {
+                allItems = await apiFetch('/api/songs-stories');
+                renderItems(allItems);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function renderItems(items) {
+            const grid = document.getElementById('itemsGrid');
+            if (items.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎵</div><p>No songs or stories yet</p></div>';
+                return;
+            }
+            grid.innerHTML = items.map(item => `
+                <div class="item-card animate-in">
+                    <div class="item-type">${item.type === 'SONG' ? '🎵 Song' : '📖 Story'}</div>
+                    <h3>${item.title}</h3>
+                    <a href="${item.link}" target="_blank" class="item-link">${item.link}</a>
+                    <div class="item-actions teacher-only">
+                        <button class="btn btn-sm btn-secondary" onclick="editItem(${item.itemId}, '${item.title.replace(/'/g, "\\'")}', '${item.type}', '${item.link.replace(/'/g, "\\'")}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.itemId})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterType(type, btn) {
+            document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (type === 'ALL') renderItems(allItems);
+            else renderItems(allItems.filter(i => i.type === type));
+        }
+
+        function openAddModal() {
+            document.getElementById('editItemId').value = '';
+            document.getElementById('itemModalTitle').textContent = 'Add Song / Story';
+            document.getElementById('itemForm').reset();
+            openModal('itemModal');
+        }
+
+        function editItem(id, title, type, link) {
+            document.getElementById('editItemId').value = id;
+            document.getElementById('itemModalTitle').textContent = 'Edit Item';
+            document.getElementById('iTitle').value = title;
+            document.getElementById('iType').value = type;
+            document.getElementById('iLink').value = link;
+            openModal('itemModal');
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Delete this item?')) return;
+            try { await apiFetch('/api/songs-stories/' + id, { method: 'DELETE' }); showToast('Deleted!', 'success'); loadItems(); }
+            catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.getElementById('itemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editItemId').value;
+            const body = {
+                title: document.getElementById('iTitle').value,
+                type: document.getElementById('iType').value,
+                link: document.getElementById('iLink').value
+            };
+            try {
+                if (id) { await apiFetch('/api/songs-stories/' + id, { method: 'PUT', body: JSON.stringify(body) }); }
+                else { await apiFetch('/api/songs-stories', { method: 'POST', body: JSON.stringify(body) }); }
+                showToast('Saved!', 'success');
+                closeModal('itemModal');
+                loadItems();
+            } catch (e) { showToast(e.message, 'error'); }
+        });
+
+        loadItems();
+    </script>
+</body>
+
+</html>
