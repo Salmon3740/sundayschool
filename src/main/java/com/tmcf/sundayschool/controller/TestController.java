@@ -27,17 +27,17 @@ public class TestController {
 
     // ✅ 2. Get all tests for a class
     @GetMapping("/class/{classId}")
-    public ResponseEntity<List<Test>> getTestsByClass(@PathVariable Long classId) {
+    public ResponseEntity<List<Test>> getTestsByClass(@PathVariable("classId") Long classId) {
         return ResponseEntity.ok(testService.getTestsByClass(classId));
     }
 
     // ✅ 3. Assign / update marks for a student on a test
     @PostMapping("/marks")
     public ResponseEntity<TestMark> assignMarks(
-            @RequestParam Long testId,
-            @RequestParam Long studentId,
-            @RequestParam Integer marks,
-            @RequestParam Boolean present) {
+            @RequestParam("testId") Long testId,
+            @RequestParam("studentId") Long studentId,
+            @RequestParam("marks") Integer marks,
+            @RequestParam("present") Boolean present) {
 
         TestMark testMark = testService.assignMarks(testId, studentId, marks, present);
         return ResponseEntity.ok(testMark);
@@ -45,13 +45,13 @@ public class TestController {
 
     // ✅ 4. Get all marks for a test (test-wise results)
     @GetMapping("/marks/test/{testId}")
-    public ResponseEntity<List<TestMark>> getMarksByTest(@PathVariable Long testId) {
+    public ResponseEntity<List<TestMark>> getMarksByTest(@PathVariable("testId") Long testId) {
         return ResponseEntity.ok(testService.getMarksByTest(testId));
     }
 
     // ✅ 5. Get all marks of a student (student report / total marks)
     @GetMapping("/marks/student/{studentId}")
-    public ResponseEntity<List<TestMark>> getMarksByStudent(@PathVariable Long studentId) {
+    public ResponseEntity<List<TestMark>> getMarksByStudent(@PathVariable("studentId") Long studentId) {
         return ResponseEntity.ok(testService.getMarksByStudent(studentId));
     }
 }

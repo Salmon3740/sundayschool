@@ -41,7 +41,7 @@ public class ReportController {
      * marks
      */
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<StudentReportResponse> getStudentReport(@PathVariable Long studentId) {
+    public ResponseEntity<StudentReportResponse> getStudentReport(@PathVariable("studentId") Long studentId) {
 
         Student student = studentService.getStudentById(studentId);
 
@@ -87,7 +87,7 @@ public class ReportController {
      * Class-wide report: all students with their attendance % and total marks
      */
     @GetMapping("/class/{classId}")
-    public ResponseEntity<List<StudentDetailResponse>> getClassReport(@PathVariable Long classId) {
+    public ResponseEntity<List<StudentDetailResponse>> getClassReport(@PathVariable("classId") Long classId) {
 
         SundayClass sundayClass = sundayClassService.getSundayClassById(classId);
         List<Student> students = studentService.getStudentsByClass(sundayClass);

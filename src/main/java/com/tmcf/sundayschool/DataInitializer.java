@@ -95,7 +95,8 @@ public class DataInitializer implements CommandLineRunner {
                 { "teacher_grace", "grace.teacher@tmcf.com", "Grace Asante" },
                 { "teacher_david", "david.teacher@tmcf.com", "David Owusu" },
                 { "teacher_mary", "mary.teacher@tmcf.com", "Mary Boateng" },
-                { "teacher_peter", "peter.teacher@tmcf.com", "Peter Adjei" }
+                { "teacher_peter", "peter.teacher@tmcf.com", "Peter Adjei" },
+                { "admin", "admin@tmcf.com", "Administrator" }
         };
         for (String[] t : teachers) {
             if (!userRepo.existsByUsername(t[0])) {

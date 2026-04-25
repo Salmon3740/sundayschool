@@ -31,13 +31,13 @@ public class SundayClassController {
 
     // ✅ 2. Get class by ID
     @GetMapping("/{id}")
-    public ResponseEntity<SundayClass> getClassById(@PathVariable Long id) {
+    public ResponseEntity<SundayClass> getClassById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(sundayClassService.getSundayClassById(id));
     }
 
     // ✅ 3. Get class by name
     @GetMapping("/name/{className}")
-    public ResponseEntity<SundayClass> getClassByName(@PathVariable String className) {
+    public ResponseEntity<SundayClass> getClassByName(@PathVariable("className") String className) {
         return ResponseEntity.ok(sundayClassService.getSundayClassByName(className));
     }
 
@@ -50,14 +50,14 @@ public class SundayClassController {
     // ✅ 5. Update class (teacher updates word of the week, lesson name, etc.)
     @PutMapping("/{id}")
     public ResponseEntity<SundayClass> updateClass(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody SundayClass sundayClass) {
         return ResponseEntity.ok(sundayClassService.updateSundayClass(id, sundayClass));
     }
 
     // ✅ 6. Get all students in a class (when a class card is clicked)
     @GetMapping("/{id}/students")
-    public ResponseEntity<List<Student>> getStudentsInClass(@PathVariable Long id) {
+    public ResponseEntity<List<Student>> getStudentsInClass(@PathVariable("id") Long id) {
         SundayClass sundayClass = sundayClassService.getSundayClassById(id);
         return ResponseEntity.ok(studentService.getStudentsByClass(sundayClass));
     }

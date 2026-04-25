@@ -49,10 +49,24 @@ public class StudentController {
         student.setGender(Gender.valueOf(request.getGender().toUpperCase()));
         student.setAge(request.getAge());
 
+        User user;
         if (request.getUserId() != null) {
-            User user = userService.findById(request.getUserId());
-            student.setUser(user);
+            user = userService.findById(request.getUserId());
+        } else {
+            // Auto-generate a user if none provided
+            user = new User();
+            String baseUsername = request.getFullName().toLowerCase().replaceAll("\\s+", "");
+            String username = baseUsername;
+            int counter = 1;
+            while (userService.existsByUsername(username)) {
+                username = baseUsername + counter++;
+            }
+            user.setUsername(username);
+            user.setEmail(username + "@sundayschool.com");
+            user.setPassword("student123"); // Default password
+            user = userService.registerStudent(user);
         }
+        student.setUser(user);
 
         if (request.getClassId() != null) {
             SundayClass sundayClass = sundayClassService.getSundayClassById(request.getClassId());
@@ -70,32 +84,32 @@ public class StudentController {
 
     // ✅ 3. Get student by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Student> getStudent(@PathVariable Long id) {
+    public ResponseEntity<Student> getStudent(@PathVariable("id") Long id) {
         return ResponseEntity.ok(studentService.getStudentById(id));
     }
 
     // ✅ 4. Get enriched student details (with attendance % and total marks)
     @GetMapping("/{id}/details")
-    public ResponseEntity<StudentDetailResponse> getStudentDetails(@PathVariable Long id) {
+    public ResponseEntity<StudentDetailResponse> getStudentDetails(@PathVariable("id") Long id) {
         return ResponseEntity.ok(buildStudentDetailResponse(studentService.getStudentById(id)));
     }
 
     // ✅ 5. Get student by username
     @GetMapping("/username/{username}")
-    public ResponseEntity<Student> getByUsername(@PathVariable String username) {
+    public ResponseEntity<Student> getByUsername(@PathVariable("username") String username) {
         return ResponseEntity.ok(studentService.getStudentByUsername(username));
     }
 
     // ✅ 6. Search students by name
     @GetMapping("/search")
-    public ResponseEntity<List<Student>> searchStudents(@RequestParam String name) {
+    public ResponseEntity<List<Student>> searchStudents(@RequestParam("name") String name) {
         return ResponseEntity.ok(studentService.searchStudents(name));
     }
 
     // ✅ 7. Get students by class (with enriched details)
     @GetMapping("/class/{classId}")
     public ResponseEntity<List<StudentDetailResponse>> getStudentsByClassWithDetails(
-            @PathVariable Long classId) {
+            @PathVariable("classId") Long classId) {
 
         SundayClass sundayClass = sundayClassService.getSundayClassById(classId);
         List<Student> students = studentService.getStudentsByClass(sundayClass);
@@ -110,14 +124,14 @@ public class StudentController {
     // ✅ 8. Update student
     @PutMapping("/{id}")
     public ResponseEntity<Student> updateStudent(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Student student) {
         return ResponseEntity.ok(studentService.updateStudent(id, student));
     }
 
     // ✅ 9. Delete student
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
+    public ResponseEntity<String> deleteStudent(@PathVariable("id") Long id) {
         studentService.deleteStudent(id);
         return ResponseEntity.ok("Student deleted successfully");
     }

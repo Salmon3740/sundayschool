@@ -82,15 +82,9 @@
                         <input type="number" class="form-control" id="sAge" min="3" max="25">
                     </div>
                 </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>User ID</label>
-                        <input type="number" class="form-control" id="sUserId" placeholder="Registered user ID">
-                    </div>
-                    <div class="form-group">
-                        <label>Class</label>
-                        <select class="form-control" id="sClassId" required></select>
-                    </div>
+                <div class="form-group">
+                    <label>Class</label>
+                    <select class="form-control" id="sClassId" required></select>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary"
@@ -184,7 +178,10 @@
                     <td><strong>${s.totalMarks}</strong></td>
                     <td><span class="badge ${s.active ? 'badge-active' : 'badge-inactive'}">${s.active ? 'Active' : 'Inactive'}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.location.href='/students/${s.studentId}/profile'">View</button>
+                        <div class="flex-row gap-8">
+                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.location.href='/students/${s.studentId}/profile'">View</button>
+                            <button class="btn btn-sm btn-danger teacher-only" onclick="event.stopPropagation(); deleteStudent(${s.studentId})">Delete</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -211,7 +208,6 @@
                         fullName: document.getElementById('sFullName').value,
                         gender: document.getElementById('sGender').value,
                         age: parseInt(document.getElementById('sAge').value) || null,
-                        userId: parseInt(document.getElementById('sUserId').value) || null,
                         classId: parseInt(document.getElementById('sClassId').value)
                     })
                 });
@@ -222,6 +218,17 @@
                 showToast(err.message, 'error');
             }
         });
+
+        async function deleteStudent(id) {
+            if (!confirm('Are you sure you want to remove this student?')) return;
+            try {
+                await apiFetch('/api/students/' + id, { method: 'DELETE' });
+                showToast('Student removed!', 'success');
+                loadData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
 
         loadData();
     </script>

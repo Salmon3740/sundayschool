@@ -28,14 +28,14 @@ public class SongStoryController {
     // ✅ 2. Update a song or story
     @PutMapping("/{id}")
     public ResponseEntity<SongStory> updateItem(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody SongStory songStory) {
         return ResponseEntity.ok(songStoryService.updateItem(id, songStory));
     }
 
     // ✅ 3. Delete a song or story
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteItem(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteItem(@PathVariable("id") Long id) {
         songStoryService.deleteItem(id);
         return ResponseEntity.ok(Map.of("message", "Item deleted successfully"));
     }
@@ -48,7 +48,7 @@ public class SongStoryController {
 
     // ✅ 5. Get items by type (SONG / STORY)
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<SongStory>> getItemsByType(@PathVariable String type) {
+    public ResponseEntity<List<SongStory>> getItemsByType(@PathVariable("type") String type) {
         return ResponseEntity.ok(songStoryService.getItemsByType(type));
     }
 }

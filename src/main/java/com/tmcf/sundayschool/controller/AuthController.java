@@ -79,7 +79,7 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()));
-
+            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException("Invalid username or password");
         }

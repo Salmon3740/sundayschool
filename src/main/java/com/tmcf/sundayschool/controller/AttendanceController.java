@@ -23,9 +23,9 @@ public class AttendanceController {
     // ✅ 1. Mark attendance for a single student
     @PostMapping("/mark")
     public ResponseEntity<Attendance> markAttendance(
-            @RequestParam Long studentId,
-            @RequestParam String date,
-            @RequestParam boolean present) {
+            @RequestParam("studentId") Long studentId,
+            @RequestParam("date") String date,
+            @RequestParam("present") boolean present) {
 
         LocalDate localDate = LocalDate.parse(date);
         Attendance attendance = attendanceService.markAttendance(studentId, localDate, present);
@@ -35,9 +35,9 @@ public class AttendanceController {
     // ✅ 2. Mark attendance for all students of a class (present all / absent all)
     @PostMapping("/mark-class")
     public ResponseEntity<Map<String, String>> markAttendanceForClass(
-            @RequestParam Long classId,
-            @RequestParam String date,
-            @RequestParam boolean present) {
+            @RequestParam("classId") Long classId,
+            @RequestParam("date") String date,
+            @RequestParam("present") boolean present) {
 
         LocalDate localDate = LocalDate.parse(date);
         attendanceService.markAttendanceForClass(classId, localDate, present);
@@ -47,13 +47,13 @@ public class AttendanceController {
 
     // ✅ 3. Get attendance records for a student
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<Attendance>> getAttendanceByStudent(@PathVariable Long studentId) {
+    public ResponseEntity<List<Attendance>> getAttendanceByStudent(@PathVariable("studentId") Long studentId) {
         return ResponseEntity.ok(attendanceService.getAttendanceByStudent(studentId));
     }
 
     // ✅ 4. Get attendance records by date
     @GetMapping("/date/{date}")
-    public ResponseEntity<List<Attendance>> getAttendanceByDate(@PathVariable String date) {
+    public ResponseEntity<List<Attendance>> getAttendanceByDate(@PathVariable("date") String date) {
         LocalDate localDate = LocalDate.parse(date);
         return ResponseEntity.ok(attendanceService.getAttendanceByDate(localDate));
     }
@@ -61,8 +61,8 @@ public class AttendanceController {
     // ✅ 5. Check if attendance already marked
     @GetMapping("/check")
     public ResponseEntity<Map<String, Boolean>> isAttendanceMarked(
-            @RequestParam Long studentId,
-            @RequestParam String date) {
+            @RequestParam("studentId") Long studentId,
+            @RequestParam("date") String date) {
 
         LocalDate localDate = LocalDate.parse(date);
         boolean marked = attendanceService.isAttendanceAlreadyMarked(studentId, localDate);
@@ -71,7 +71,7 @@ public class AttendanceController {
 
     // ✅ 6. Get attendance percentage for a student
     @GetMapping("/percentage/{studentId}")
-    public ResponseEntity<Map<String, Double>> getAttendancePercentage(@PathVariable Long studentId) {
+    public ResponseEntity<Map<String, Double>> getAttendancePercentage(@PathVariable("studentId") Long studentId) {
         double percentage = attendanceService.calculateAttendancePercentage(studentId);
         return ResponseEntity.ok(Map.of("percentage", percentage));
     }
@@ -80,8 +80,8 @@ public class AttendanceController {
     // view)
     @GetMapping("/class/{classId}/date/{date}")
     public ResponseEntity<List<Attendance>> getAttendanceByClassAndDate(
-            @PathVariable Long classId,
-            @PathVariable String date) {
+            @PathVariable("classId") Long classId,
+            @PathVariable("date") String date) {
         LocalDate localDate = LocalDate.parse(date);
         return ResponseEntity.ok(attendanceService.getAttendanceByClassAndDate(classId, localDate));
     }

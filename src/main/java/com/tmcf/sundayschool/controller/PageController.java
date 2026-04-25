@@ -28,7 +28,7 @@ public class PageController {
     }
 
     @GetMapping("/students/{id}/profile")
-    public String studentProfilePage(@PathVariable Long id) {
+    public String studentProfilePage(@PathVariable("id") Long id) {
         return "student-profile";
     }
 
@@ -58,7 +58,7 @@ public class PageController {
     }
 
     @GetMapping("/class/{id}")
-    public String classPage(@PathVariable Long id) {
+    public String classPage(@PathVariable("id") Long id) {
         return "class";
     }
 }

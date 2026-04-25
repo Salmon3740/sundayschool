@@ -27,34 +27,34 @@ public class WeeklyLessonController {
 
     // ✅ 2. Get lesson by ID
     @GetMapping("/{id}")
-    public ResponseEntity<WeeklyLesson> getLessonById(@PathVariable Long id) {
+    public ResponseEntity<WeeklyLesson> getLessonById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(weeklyLessonService.getLessonById(id));
     }
 
     // ✅ 3. Get all lessons for a class
     @GetMapping("/class/{classId}")
-    public ResponseEntity<List<WeeklyLesson>> getLessonsByClass(@PathVariable Long classId) {
+    public ResponseEntity<List<WeeklyLesson>> getLessonsByClass(@PathVariable("classId") Long classId) {
         return ResponseEntity.ok(weeklyLessonService.getLessonsByClass(classId));
     }
 
     // ✅ 4. Update a lesson
     @PutMapping("/{id}")
     public ResponseEntity<WeeklyLesson> updateLesson(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody WeeklyLesson lesson) {
         return ResponseEntity.ok(weeklyLessonService.updateLesson(id, lesson));
     }
 
     // ✅ 5. Delete a lesson
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteLesson(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteLesson(@PathVariable("id") Long id) {
         weeklyLessonService.deleteLesson(id);
         return ResponseEntity.ok(Map.of("message", "Lesson deleted successfully"));
     }
 
     // ✅ 6. Get the latest (current week) lesson for a class
     @GetMapping("/class/{classId}/latest")
-    public ResponseEntity<?> getLatestLesson(@PathVariable Long classId) {
+    public ResponseEntity<?> getLatestLesson(@PathVariable("classId") Long classId) {
         return weeklyLessonService.getLatestLessonByClass(classId)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());

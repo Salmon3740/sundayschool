@@ -23,6 +23,12 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Student createStudent(Student student) {
+        if (student.getUser() != null) {
+            studentRepository.findByUser(student.getUser()).ifPresent(s -> {
+                throw new com.tmcf.sundayschool.exception.DuplicateResourceException(
+                        "Student", "userId", student.getUser().getUserId().toString());
+            });
+        }
         return studentRepository.save(student);
     }
 
@@ -47,6 +53,15 @@ public class StudentServiceImpl implements StudentService {
     public Student updateStudent(Long studentId, Student updatedStudent) {
 
         Student existingStudent = getStudentById(studentId);
+
+        if (updatedStudent.getUser() != null &&
+                !updatedStudent.getUser().getUserId().equals(existingStudent.getUser().getUserId())) {
+            studentRepository.findByUser(updatedStudent.getUser()).ifPresent(s -> {
+                throw new com.tmcf.sundayschool.exception.DuplicateResourceException(
+                        "Student", "userId", updatedStudent.getUser().getUserId().toString());
+            });
+            existingStudent.setUser(updatedStudent.getUser());
+        }
 
         existingStudent.setFullName(updatedStudent.getFullName());
         existingStudent.setGender(updatedStudent.getGender());
